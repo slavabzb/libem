@@ -10,10 +10,6 @@ set(target_name "${PROJECT_NAME}app")
 
 file(GLOB src_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "src/*.c")
 
-include_directories(
-	${CMAKE_SOURCE_DIR}/lib/include
-)
-
 add_executable(
 	${target_name}
 	${src_files}
@@ -21,8 +17,8 @@ add_executable(
 
 set(link_libraries
 	em
-	gomp
 	gmp
+	gomp
 )
 
 target_link_libraries(
