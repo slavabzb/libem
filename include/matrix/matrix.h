@@ -2,40 +2,73 @@
 #define MATRIX_H
 
 #include <stdio.h>
+#include <mpfr.h>
+
+/**
+ * A matrix POD structure.
+ */
+struct matrix
+{
+	mpfr_t* storage;	///!< internal storage
+	size_t nrows;		///!< number of rows
+	size_t ncols;		///!< number of columns
+};
 
 /**
  * Initializes a matrix.
  * 
- * @param mtx a matrix to be initialized
- * @param nrows number of rows
- * @param ncols number of columns
+ * Allocates a memory for internal storage and matrix elements.
+ * 
+ * @param m a matrix
+ * @param rows a number of the rows
+ * @param columns a number of the columns
+ * @param prec a precision
  * @return 0 on success, non-zero otherwise
  */
-int mtx_init(mpq_t** mtx, size_t const nrows, size_t const ncols);
+int mtx_init(struct matrix* const m, size_t rows, size_t columns, mpfr_prec_t prec);
 
 /**
  * Clears a matrix resources.
  * 
- * @param mtx a matrix to be cleared
- * @param nrows number of rows
- * @param ncols number of columns
+ * Destroys the matrix elements end frees the internal storage.
+ * 
+ * @param m a matrix
  * @return 0 on success, non-zero otherwise
  */
-int mtx_clear(mpq_t** mtx, size_t const nrows, size_t const ncols);
+int mtx_clear(struct matrix const* const m);
+
+/**
+ * Outputs a matrix to stream.
+ * 
+ * @param stream a stream
+ * @param m a matrix
+ * @return The number of characters written, or 0 if an error occurred.
+ */
+int mtx_print(FILE* stream, struct matrix const* const m);
 
 /**
  * Multiplies the matrices.
  * 
- * @param res the multiplication result
- * @param a a left-hand side matrix
- * @param b a right-hand side matrix
- * @param arows a number of rows in matrix a
- * @param bcols a number of columns in matrix b
- * @param cols a number of columns in the matrices a and b
+ * The number of columns of the left-hand side operand must be equal
+ * to the number of the rows of the right-hand side operand.
+ * 
+ * @param rop the result matrix
+ * @param op1 a left-hand side operand
+ * @param op2 a right-hand side operand
  * @return 0 on success, non-zero otherwise
  */
-int mtx_mul(mpq_t* res, mpq_t* a, mpq_t* b, size_t const arows, size_t const bcols, size_t const cols);
+int mtx_mul(struct matrix* const rop, struct matrix const* const op1, struct matrix const* const op2);
 
-size_t mtx_print(FILE* stream, mpq_t* mtx, size_t const nrows, size_t const ncols, int base);
+/**
+ * Adds the matrices.
+ * 
+ * The dimensions of the matrices must be the same.
+ * 
+ * @param rop the result matrix
+ * @param op1 the first matrix
+ * @param op2 the second matrix
+ * @return 0 on success, non-zero otherwise
+ */
+int mtx_add(struct matrix* const rop, struct matrix const* const op1, struct matrix const* const op2);
 
 #endif /* MATRIX_H */

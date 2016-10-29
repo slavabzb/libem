@@ -29,6 +29,18 @@ if(GMP_FOUND)
 	)
 endif()
 
+find_package(MPFR)
+if(MPFR_FOUND)
+	set(include_dirs
+		${include_dirs}
+		${MPFR_INCLUDES}
+	)
+	set(link_libraries
+		${link_libraries}
+		${MPFR_LIBRARIES}
+	)
+endif()
+
 include_directories(${include_dirs})
 
 file(GLOB src_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "src/*.c")
