@@ -6,9 +6,9 @@
 
 #include <CUnit/Basic.h>
 
-struct matrix ma;
-struct matrix mb;
-struct matrix mc;
+struct mtx ma;
+struct mtx mb;
+struct mtx mc;
 
 int suite_init_init(void)
 {
@@ -43,7 +43,7 @@ int suite_clear_clean(void)
 
 void test_mtx_clear(void)
 {
-	CU_ASSERT(0 == mtx_clear(&ma));
+	CU_ASSERT(0 == mtx_clear(ma));
 }
 
 int suite_ops_init(void)
@@ -75,13 +75,14 @@ int suite_ops_init(void)
 
 int suite_ops_clean(void)
 {
-	return mtx_clear(&ma) || mtx_clear(&mb) || mtx_clear(&mc);
+	return mtx_clear(ma) || mtx_clear(mb) || mtx_clear(mc);
 }
 
 void test_mtx_mul(void)
 {
-	CU_ASSERT(0 != mtx_mul(&mc, &ma, &ma));
-	CU_ASSERT(0 == mtx_mul(&mc, &ma, &mb));
+	CU_ASSERT(0 != mtx_mul(ma, ma, mb));
+	CU_ASSERT(0 != mtx_mul(mc, ma, ma));
+	CU_ASSERT(0 == mtx_mul(mc, ma, mb));
 	
 	size_t i, j, k;
 	
@@ -118,7 +119,44 @@ void test_mtx_mul(void)
 
 void test_mtx_add(void)
 {
-	CU_ASSERT(0 != mtx_add(&mc, &ma, &mb));
+	CU_ASSERT(0 != mtx_add(mc, ma, mb));
+	CU_ASSERT(0 != mtx_add(mc, ma, ma));
+	CU_ASSERT(0 == mtx_add(ma, ma, ma));
+		
+	size_t i, j;
+	
+	for (i = 0; i < ma.nrows; ++i)
+	{
+		for (j = 0; j < ma.ncols; ++j)
+		{
+			mpfr_t tmp;
+			mpfr_init_set_ui(tmp, 2 * (i + j), MPFR_RNDD);
+			CU_ASSERT(0 == mpfr_cmp(*(ma.storage + i * ma.ncols + j), tmp));
+			mpfr_clear(tmp);
+		}
+	}
+}
+
+void test_mtx_tr(void)
+{
+	CU_ASSERT(0 != mtx_tr(mc, ma));
+	
+	struct mtx tr;
+	mtx_init(&tr, ma.ncols, ma.nrows, 10);
+	
+	CU_ASSERT(0 == mtx_tr(tr, ma));
+	
+	size_t i, j;
+	
+	for (i = 0; i < tr.nrows; ++i)
+	{
+		for (j = 0; j < tr.ncols; ++j)
+		{
+			CU_ASSERT(0 == mpfr_cmp(*(tr.storage + i * tr.ncols + j), *(ma.storage + j * ma.ncols + i)));
+		}
+	}
+	
+	mtx_clear(tr);
 }
 
 int main()
@@ -166,7 +204,8 @@ int main()
 	}
 
 	if ((NULL == CU_add_test(suite_ops, "mtx_mul", test_mtx_mul)) ||
-			(NULL == CU_add_test(suite_ops, "mtx_add", test_mtx_add)))
+			(NULL == CU_add_test(suite_ops, "mtx_add", test_mtx_add)) ||
+			(NULL == CU_add_test(suite_ops, "mtx_tr", test_mtx_tr)))
 	{
 		CU_cleanup_registry();
 		return CU_get_error();

@@ -7,7 +7,7 @@
 /**
  * A matrix POD structure.
  */
-struct matrix
+struct mtx
 {
 	mpfr_t* storage;	///!< internal storage
 	size_t nrows;		///!< number of rows
@@ -25,7 +25,7 @@ struct matrix
  * @param prec a precision
  * @return 0 on success, non-zero otherwise
  */
-int mtx_init(struct matrix* const m, size_t rows, size_t columns, mpfr_prec_t prec);
+int mtx_init(struct mtx* const m, size_t rows, size_t columns, mpfr_prec_t prec);
 
 /**
  * Clears a matrix resources.
@@ -35,7 +35,7 @@ int mtx_init(struct matrix* const m, size_t rows, size_t columns, mpfr_prec_t pr
  * @param m a matrix
  * @return 0 on success, non-zero otherwise
  */
-int mtx_clear(struct matrix const* const m);
+int mtx_clear(struct mtx const m);
 
 /**
  * Outputs a matrix to stream.
@@ -44,20 +44,22 @@ int mtx_clear(struct matrix const* const m);
  * @param m a matrix
  * @return The number of characters written, or 0 if an error occurred.
  */
-int mtx_print(FILE* stream, struct matrix const* const m);
+int mtx_fprint(FILE* stream, struct mtx const m);
 
 /**
  * Multiplies the matrices.
  * 
- * The number of columns of the left-hand side operand must be equal
- * to the number of the rows of the right-hand side operand.
+ * The dimensions of the matrices must be as follows:
+ *		rop.nrows == op1.nrows
+ *		rop.ncols == op2.ncols
+ *		op1.ncols == op2.nrows
  * 
  * @param rop the result matrix
  * @param op1 a left-hand side operand
  * @param op2 a right-hand side operand
  * @return 0 on success, non-zero otherwise
  */
-int mtx_mul(struct matrix* const rop, struct matrix const* const op1, struct matrix const* const op2);
+int mtx_mul(struct mtx rop, struct mtx const op1, struct mtx const op2);
 
 /**
  * Adds the matrices.
@@ -69,6 +71,19 @@ int mtx_mul(struct matrix* const rop, struct matrix const* const op1, struct mat
  * @param op2 the second matrix
  * @return 0 on success, non-zero otherwise
  */
-int mtx_add(struct matrix* const rop, struct matrix const* const op1, struct matrix const* const op2);
+int mtx_add(struct mtx rop, struct mtx const op1, struct mtx const op2);
+
+/**
+ * Transposes the matrix.
+ * 
+ * The dimension of the rop matrix must be as follows:
+ *		rop.nrows == op.ncols
+ *		rop.ncols == op.nrows
+ * 
+ * @param rop the result matrix
+ * @param op a matrix to be transposed
+ * @return 0 on success, non-zero otherwise
+ */
+int mtx_tr(struct mtx rop, struct mtx const op);
 
 #endif /* MATRIX_H */
