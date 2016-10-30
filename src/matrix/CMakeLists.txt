@@ -17,18 +17,6 @@ if(CUNIT_FOUND)
 	)
 endif()
 
-find_package(GMP)
-if(GMP_FOUND)
-	set(include_dirs
-		${include_dirs}
-		${GMP_INCLUDE_DIR}
-	)
-	set(link_libraries
-		${link_libraries}
-		${GMP_LIBRARIES}
-	)
-endif()
-
 find_package(MPFR)
 if(MPFR_FOUND)
 	set(include_dirs
@@ -39,6 +27,11 @@ if(MPFR_FOUND)
 		${link_libraries}
 		${MPFR_LIBRARIES}
 	)
+endif()
+
+find_package(OpenMP)
+if(OPENMP_FOUND)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 endif()
 
 include_directories(${include_dirs})
