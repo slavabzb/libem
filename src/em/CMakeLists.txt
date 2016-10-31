@@ -2,12 +2,18 @@ cmake_minimum_required(VERSION 2.8.5)
 
 set(target_name ${PROJECT_NAME})
 
+set(link_libraries
+	m
+	matrix
+)
+
 find_package(CUnit)
 if(CUNIT_FOUND)
 	include_directories(
 		${CUNIT_INCLUDE_DIRS}
 	)
 	set(link_libraries
+		${link_libraries}
 		${CUNIT_LIBRARIES}
 	)
 endif()

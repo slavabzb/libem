@@ -80,6 +80,38 @@ int mtx_fprint(FILE* stream, struct mtx const m)
 	return total;
 }
 
+int mtx_fill(struct mtx m, double val, double diagval)
+{
+	size_t i, j;
+
+#pragma omp parallel for shared(m) private(i, j) schedule(static)
+	for (i = 0; i < m.nrows; ++i)
+	{
+		for (j = 0; j < m.ncols; ++j)
+		{
+			mpfr_t* ptr = m.storage + i * m.ncols + j;
+			
+			if (m.nrows == m.ncols)
+			{
+				if (i == j)
+				{
+					mpfr_set_d(*ptr, diagval, MPFR_RNDD);
+				}
+				else
+				{
+					mpfr_set_d(*ptr, val, MPFR_RNDD);
+				}
+			}
+			else
+			{
+				mpfr_set_d(*ptr, val, MPFR_RNDD);
+			}
+		}
+	}
+	
+	return 0;
+}
+
 int mtx_mul(struct mtx rop, struct mtx const op1, struct mtx const op2)
 {
 	if (rop.nrows != op1.nrows || rop.ncols != op2.ncols)

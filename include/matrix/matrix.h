@@ -47,6 +47,17 @@ int mtx_clear(struct mtx const m);
 int mtx_fprint(FILE* stream, struct mtx const m);
 
 /**
+ * Sets the matrix elements values.
+ * 
+ * @param m a matrix
+ * @param val a value
+ * @param diagval a value will be used only for diagonal elements
+ * if matrix is square
+ * @return 0 on success, non-zero otherwise
+ */
+int mtx_fill(struct mtx m, double val, double diagval);
+
+/**
  * Multiplies the matrices.
  * 
  * The dimensions of the matrices must be as follows:

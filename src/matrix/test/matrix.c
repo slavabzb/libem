@@ -10,6 +10,8 @@ struct mtx ma;
 struct mtx mb;
 struct mtx mc;
 
+struct mtx msquare;
+
 int suite_init_init(void)
 {
 	ma.storage = NULL;	
@@ -33,6 +35,7 @@ int suite_clear_init(void)
 	ma.nrows = 2;
 	ma.ncols = 3;
 	ma.storage = (mpfr_t*) malloc(sizeof(mpfr_t) * ma.nrows * ma.ncols);	
+	
 	return 0;
 }
 
@@ -48,9 +51,25 @@ void test_mtx_clear(void)
 
 int suite_ops_init(void)
 {
-	mtx_init(&ma, 2, 3, 10);
-	mtx_init(&mb, 3, 4, 10);
-	mtx_init(&mc, 2, 4, 10);
+	if (mtx_init(&ma, 2, 3, 10))
+	{
+		return -1;
+	}
+	
+	if (mtx_init(&mb, 3, 4, 10))
+	{
+		return -1;
+	}
+	
+	if (mtx_init(&mc, 2, 4, 10))
+	{
+		return -1;
+	}
+	
+	if (mtx_init(&msquare, 2, 2, 10))
+	{
+		return -1;
+	}
 
 	size_t i, j;
 	
@@ -75,7 +94,45 @@ int suite_ops_init(void)
 
 int suite_ops_clean(void)
 {
-	return mtx_clear(ma) || mtx_clear(mb) || mtx_clear(mc);
+	return mtx_clear(ma) ||
+			mtx_clear(mb) ||
+			mtx_clear(mc) ||
+			mtx_clear(msquare);
+}
+
+void test_mtx_fill(void)
+{
+	double const val = 1.0;
+	double const diagval = 2.0;
+	
+	CU_ASSERT(0 == mtx_fill(mb, val, diagval));
+	
+	int i, j;
+	
+	for (i = 0; i < mb.nrows; ++i)
+	{
+		for (j = 0; j < mb.ncols; ++j)
+		{
+			CU_ASSERT(val == mpfr_get_d(*(mb.storage + i * mb.ncols + j), MPFR_RNDD));
+		}
+	}
+	
+	CU_ASSERT(0 == mtx_fill(msquare, val, diagval));
+	
+	for (i = 0; i < msquare.nrows; ++i)
+	{
+		for (j = 0; j < msquare.ncols; ++j)
+		{
+			if (i == j)
+			{
+				CU_ASSERT(diagval == mpfr_get_d(*(msquare.storage + i * msquare.ncols + j), MPFR_RNDD));
+			}
+			else
+			{
+				CU_ASSERT(val == mpfr_get_d(*(msquare.storage + i * msquare.ncols + j), MPFR_RNDD));
+			}
+		}
+	}
 }
 
 void test_mtx_mul(void)
@@ -203,7 +260,8 @@ int main()
 		return CU_get_error();
 	}
 
-	if ((NULL == CU_add_test(suite_ops, "mtx_mul", test_mtx_mul)) ||
+	if ((NULL == CU_add_test(suite_ops, "mtx_fill", test_mtx_fill)) ||
+			(NULL == CU_add_test(suite_ops, "mtx_mul", test_mtx_mul)) ||
 			(NULL == CU_add_test(suite_ops, "mtx_add", test_mtx_add)) ||
 			(NULL == CU_add_test(suite_ops, "mtx_tr", test_mtx_tr)))
 	{
