@@ -16,15 +16,12 @@ int mtx_init(struct mtx* const m, size_t rows, size_t columns, mpfr_prec_t prec)
 	
 	size_t i, j;
 	
-#pragma omp parallel private(i, j)
+#pragma omp parallel for private(i, j) schedule(static)
+	for(i = 0; i < m->nrows; ++i)
 	{
-#pragma omp for schedule(static)
-		for(i = 0; i < m->nrows; ++i)
+		for(j = 0; j < m->ncols; ++j)
 		{
-			for(j = 0; j < m->ncols; ++j)
-			{
-				mpfr_init2(*(m->storage + i * m->ncols + j), prec);
-			}
+			mpfr_init2(*(m->storage + i * m->ncols + j), prec);
 		}
 	}
 
@@ -35,15 +32,12 @@ int mtx_clear(struct mtx const m)
 {
 	size_t i, j;
 	
-#pragma omp parallel private(i, j)
+#pragma omp parallel for private(i, j) schedule(static)
+	for(i = 0; i < m.nrows; ++i)
 	{
-#pragma omp for schedule(static)
-		for(i = 0; i < m.nrows; ++i)
+		for(j = 0; j < m.ncols; ++j)
 		{
-			for(j = 0; j < m.ncols; ++j)
-			{
-				mpfr_clear(*(m.storage + i * m.ncols + j));
-			}
+			mpfr_clear(*(m.storage + i * m.ncols + j));
 		}
 	}
 
@@ -102,29 +96,26 @@ int mtx_mul(struct mtx rop, struct mtx const op1, struct mtx const op2)
 	
 	size_t i, j, k;
 
-#pragma omp parallel shared(rop) private(i, j, k)
+#pragma omp parallel for shared(rop) private(i, j, k) schedule(static)
+	for (i = 0; i < op1.nrows; ++i)
 	{
-#pragma omp for schedule(static)
-		for (i = 0; i < op1.nrows; ++i)
+		for (j = 0; j < op2.ncols; ++j)
 		{
-			for (j = 0; j < op2.ncols; ++j)
+			mpfr_t* const prop = rop.storage + i * rop.ncols + j;	
+			mpfr_set_ui(*prop, 0, MPFR_RNDD);
+
+			for (k = 0; k < op1.ncols; ++k)
 			{
-				mpfr_t* const prop = rop.storage + i * rop.ncols + j;	
-				mpfr_set_ui(*prop, 0, MPFR_RNDD);
+				mpfr_t* const pop1 = op1.storage + i * op1.ncols + k;
+				mpfr_t* const pop2 = op2.storage + k * op2.ncols + j;
 
-				for (k = 0; k < op1.ncols; ++k)
-				{
-					mpfr_t* const pop1 = op1.storage + i * op1.ncols + k;
-					mpfr_t* const pop2 = op2.storage + k * op2.ncols + j;
+				mpfr_t tmp;
+				mpfr_init2(tmp, prec);
 
-					mpfr_t tmp;
-					mpfr_init2(tmp, prec);
+				mpfr_mul(tmp, *pop1, *pop2, MPFR_RNDD);
+				mpfr_add(*prop, *prop, tmp, MPFR_RNDD);
 
-					mpfr_mul(tmp, *pop1, *pop2, MPFR_RNDD);
-					mpfr_add(*prop, *prop, tmp, MPFR_RNDD);
-
-					mpfr_clear(tmp);
-				}
+				mpfr_clear(tmp);
 			}
 		}
 	}
@@ -146,15 +137,12 @@ int mtx_add(struct mtx rop, struct mtx const op1, struct mtx const op2)
 	
 	size_t i, j;
 
-#pragma omp parallel shared(rop) private(i, j)
+#pragma omp parallel for shared(rop) private(i, j) schedule(static)
+	for (i = 0; i < rop.nrows; ++i)
 	{
-#pragma omp for schedule(static)
-		for (i = 0; i < rop.nrows; ++i)
+		for (j = 0; j < rop.ncols; ++j)
 		{
-			for (j = 0; j < rop.ncols; ++j)
-			{
-				mpfr_add(*(rop.storage + i * rop.ncols + j), *(op1.storage + i * op1.ncols + j), *(op2.storage + i * op2.ncols + j), MPFR_RNDD);
-			}
+			mpfr_add(*(rop.storage + i * rop.ncols + j), *(op1.storage + i * op1.ncols + j), *(op2.storage + i * op2.ncols + j), MPFR_RNDD);
 		}
 	}
 
@@ -170,15 +158,12 @@ int mtx_tr(struct mtx rop, struct mtx const op)
 	
 	size_t i, j;
 
-#pragma omp parallel shared(rop) private(i, j)
+#pragma omp parallel for shared(rop) private(i, j) schedule(static)	
+	for (i = 0; i < rop.nrows; ++i)
 	{
-#pragma omp for schedule(static)	
-		for (i = 0; i < rop.nrows; ++i)
+		for (j = 0; j < rop.ncols; ++j)
 		{
-			for (j = 0; j < rop.ncols; ++j)
-			{
-				mpfr_set(*(rop.storage + i * rop.ncols + j), *(op.storage + j * op.ncols + i), MPFR_RNDD);
-			}
+			mpfr_set(*(rop.storage + i * rop.ncols + j), *(op.storage + j * op.ncols + i), MPFR_RNDD);
 		}
 	}
 
