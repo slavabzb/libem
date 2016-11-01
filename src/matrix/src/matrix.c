@@ -57,7 +57,7 @@ int mtx_fprint(FILE* stream, struct mtx const m)
 	{
 		for(j = 0; j < m.ncols; ++j)
 		{
-			chars = mpfr_fprintf(stream, "%.2Rf ", *(m.storage + i * m.ncols + j));
+			chars = mpfr_fprintf(stream, "%Rf ", *(m.storage + i * m.ncols + j));
 			
 			if (chars < 0)
 			{

@@ -23,16 +23,34 @@ int em_oprimize(mpfr_t* const fx,
 		struct mtx const c)
 {
 	if (em_check_dimensions(x, a, b, c))
-	{
 		return -1;
-	}
 	
 	size_t size;
 	em_set_size(&size, a, b, c);
 	
-	size_t iter = 0;
+	mpfr_prec_t const prec = 2 * log2(a.ncols) + 2 * size;
+	if (errno == EDOM || errno == ERANGE)
+		return -1;
+	
 	struct mtx y;
-	struct mtx B;
+	if (mtx_init(&y, a.nrows, 1, prec))
+		return -1;
+	
+	if (mtx_fill(y, 0.f, 0.f))
+		return -1;
+	
+	struct mtx H;
+	if (mtx_init(&H, a.ncols, a.ncols, prec))
+		return -1;
+	if (mtx_fill(H, 0, pow(a.ncols, 2) * pow(2, 2 * size)))
+		return -1;
+	
+	size_t iter;
+	
+	for (iter = 0; iter < 1; ++iter)
+	{
+		
+	}
 	
 	return 0;
 }
@@ -43,7 +61,6 @@ int em_set_size(size_t* const size,
 		struct mtx const c)
 {
 	*size = 1;
-	
 	if (em_accum_size(size, a)
 			|| em_accum_size(size, b)
 			|| em_accum_size(size, c))
@@ -52,7 +69,6 @@ int em_set_size(size_t* const size,
 	}
 	
 	*size = log10(*size);
-	
 	if (errno == EDOM || errno == ERANGE)
 	{
 		return -1;
