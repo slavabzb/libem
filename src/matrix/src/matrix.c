@@ -80,7 +80,7 @@ int mtx_fprint(FILE* stream, struct mtx const m)
 	return total;
 }
 
-int mtx_fill(struct mtx m, mpfr_t val, mpfr_t diagval)
+int mtx_fill(struct mtx m, double val, double diagval)
 {
 	size_t i, j;
 
@@ -95,16 +95,16 @@ int mtx_fill(struct mtx m, mpfr_t val, mpfr_t diagval)
 			{
 				if (i == j)
 				{
-					mpfr_set(*ptr, diagval, MPFR_RNDD);
+					mpfr_set_d(*ptr, diagval, MPFR_RNDD);
 				}
 				else
 				{
-					mpfr_set(*ptr, val, MPFR_RNDD);
+					mpfr_set_d(*ptr, val, MPFR_RNDD);
 				}
 			}
 			else
 			{
-				mpfr_set(*ptr, val, MPFR_RNDD);
+				mpfr_set_d(*ptr, val, MPFR_RNDD);
 			}
 		}
 	}

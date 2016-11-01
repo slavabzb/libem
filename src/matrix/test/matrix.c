@@ -12,8 +12,10 @@ struct mtx mc;
 
 struct mtx msquare;
 
-mpfr_t val;
-mpfr_t diagval;
+double val;
+double diagval;
+
+mpfr_t mulval;
 
 int suite_init_init(void)
 {
@@ -73,9 +75,6 @@ int suite_ops_init(void)
 	{
 		return -1;
 	}
-
-	mpfr_init_set_ui(val, 1, MPFR_RNDD);
-	mpfr_init_set_ui(diagval, 2, MPFR_RNDD);
 	
 	size_t i, j;
 	
@@ -94,14 +93,19 @@ int suite_ops_init(void)
 			mpfr_set_ui(*(mb.storage + i * mb.ncols + j), 2*i + j, MPFR_RNDD);
 		}
 	}
-		
+	
+	val = 1.f;
+	diagval = 2.f;
+	
+	mpfr_init2(mulval, 10);
+	mpfr_init_set_d(mulval, 3.f, MPFR_RNDD);
+	
 	return 0;
 }
 
 int suite_ops_clean(void)
 {
-	mpfr_clear(val);
-	mpfr_clear(diagval);
+	mpfr_clear(mulval);
 	
 	return mtx_clear(ma) ||
 			mtx_clear(mb) ||
@@ -119,7 +123,7 @@ void test_mtx_fill(void)
 	{
 		for (j = 0; j < mb.ncols; ++j)
 		{
-			CU_ASSERT(0 == mpfr_cmp(val, *(mb.storage + i * mb.ncols + j)));
+			CU_ASSERT(0 == mpfr_cmp_d(*(mb.storage + i * mb.ncols + j), val));
 		}
 	}
 	
@@ -131,11 +135,11 @@ void test_mtx_fill(void)
 		{
 			if (i == j)
 			{
-				CU_ASSERT(0 == mpfr_cmp(diagval, *(msquare.storage + i * msquare.ncols + j)));
+				CU_ASSERT(0 == mpfr_cmp_d(*(msquare.storage + i * msquare.ncols + j), diagval));
 			}
 			else
 			{
-				CU_ASSERT(0 == mpfr_cmp(val, *(msquare.storage + i * msquare.ncols + j)));
+				CU_ASSERT(0 == mpfr_cmp_d(*(msquare.storage + i * msquare.ncols + j), val));
 			}
 		}
 	}
@@ -182,8 +186,8 @@ void test_mtx_mul(void)
 
 void test_mtx_mulval(void)
 {
-	CU_ASSERT(0 != mtx_mulval(mc, ma, val));
-	CU_ASSERT(0	== mtx_mulval(ma, ma, val));
+	CU_ASSERT(0 != mtx_mulval(mc, mb, mulval));
+	CU_ASSERT(0	== mtx_mulval(ma, ma, mulval));
 	
 	int i, j;
 	
@@ -193,7 +197,7 @@ void test_mtx_mulval(void)
 		{
 			mpfr_t tmp;
 			mpfr_init2(tmp, 10);
-			mpfr_div(tmp, *(ma.storage + i * ma.ncols + j), val, MPFR_RNDD);
+			mpfr_div(tmp, *(ma.storage + i * ma.ncols + j), mulval, MPFR_RNDD);
 			CU_ASSERT(0 == mpfr_cmp_ui(tmp, i + j));
 			mpfr_clear(tmp);
 		}
@@ -202,19 +206,19 @@ void test_mtx_mulval(void)
 
 void test_mtx_add(void)
 {
-	CU_ASSERT(0 != mtx_add(mc, ma, mb));
-	CU_ASSERT(0 != mtx_add(mc, ma, ma));
-	CU_ASSERT(0 == mtx_add(ma, ma, ma));
-		
+	CU_ASSERT(0 != mtx_add(mc, mb, ma));
+	CU_ASSERT(0 != mtx_add(mc, mb, mb));
+	CU_ASSERT(0 == mtx_add(mb, mb, mb));
+	
 	size_t i, j;
 	
-	for (i = 0; i < ma.nrows; ++i)
+	for (i = 0; i < mb.nrows; ++i)
 	{
-		for (j = 0; j < ma.ncols; ++j)
+		for (j = 0; j < mb.ncols; ++j)
 		{
 			mpfr_t tmp;
-			mpfr_init_set_ui(tmp, 2 * (i + j), MPFR_RNDD);
-			CU_ASSERT(0 == mpfr_cmp(*(ma.storage + i * ma.ncols + j), tmp));
+			mpfr_init_set_d(tmp, 2 * val, MPFR_RNDD);
+			CU_ASSERT(0 == mpfr_cmp(*(mb.storage + i * mb.ncols + j), tmp));
 			mpfr_clear(tmp);
 		}
 	}
