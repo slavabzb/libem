@@ -12,6 +12,9 @@ struct mtx mc;
 
 struct mtx msquare;
 
+mpfr_t val;
+mpfr_t diagval;
+
 int suite_init_init(void)
 {
 	ma.storage = NULL;	
@@ -71,6 +74,9 @@ int suite_ops_init(void)
 		return -1;
 	}
 
+	mpfr_init_set_ui(val, 1, MPFR_RNDD);
+	mpfr_init_set_ui(diagval, 2, MPFR_RNDD);
+	
 	size_t i, j;
 	
 	for (i = 0; i < ma.nrows; ++i)
@@ -94,6 +100,9 @@ int suite_ops_init(void)
 
 int suite_ops_clean(void)
 {
+	mpfr_clear(val);
+	mpfr_clear(diagval);
+	
 	return mtx_clear(ma) ||
 			mtx_clear(mb) ||
 			mtx_clear(mc) ||
@@ -102,9 +111,6 @@ int suite_ops_clean(void)
 
 void test_mtx_fill(void)
 {
-	double const val = 1.0;
-	double const diagval = 2.0;
-	
 	CU_ASSERT(0 == mtx_fill(mb, val, diagval));
 	
 	int i, j;
@@ -113,7 +119,7 @@ void test_mtx_fill(void)
 	{
 		for (j = 0; j < mb.ncols; ++j)
 		{
-			CU_ASSERT(val == mpfr_get_d(*(mb.storage + i * mb.ncols + j), MPFR_RNDD));
+			CU_ASSERT(0 == mpfr_cmp(val, *(mb.storage + i * mb.ncols + j)));
 		}
 	}
 	
@@ -125,11 +131,11 @@ void test_mtx_fill(void)
 		{
 			if (i == j)
 			{
-				CU_ASSERT(diagval == mpfr_get_d(*(msquare.storage + i * msquare.ncols + j), MPFR_RNDD));
+				CU_ASSERT(0 == mpfr_cmp(diagval, *(msquare.storage + i * msquare.ncols + j)));
 			}
 			else
 			{
-				CU_ASSERT(val == mpfr_get_d(*(msquare.storage + i * msquare.ncols + j), MPFR_RNDD));
+				CU_ASSERT(0 == mpfr_cmp(val, *(msquare.storage + i * msquare.ncols + j)));
 			}
 		}
 	}
@@ -170,6 +176,26 @@ void test_mtx_mul(void)
 			CU_ASSERT(0 == mpfr_cmp(*prop, tmp1));
 			
 			mpfr_clear(tmp1);
+		}
+	}
+}
+
+void test_mtx_mulval(void)
+{
+	CU_ASSERT(0 != mtx_mulval(mc, ma, val));
+	CU_ASSERT(0	== mtx_mulval(ma, ma, val));
+	
+	int i, j;
+	
+	for (i = 0; i < ma.nrows; ++i)
+	{
+		for (j = 0; j < ma.ncols; ++j)
+		{
+			mpfr_t tmp;
+			mpfr_init2(tmp, 10);
+			mpfr_div(tmp, *(ma.storage + i * ma.ncols + j), val, MPFR_RNDD);
+			CU_ASSERT(0 == mpfr_cmp_ui(tmp, i + j));
+			mpfr_clear(tmp);
 		}
 	}
 }
@@ -262,6 +288,7 @@ int main()
 
 	if ((NULL == CU_add_test(suite_ops, "mtx_fill", test_mtx_fill)) ||
 			(NULL == CU_add_test(suite_ops, "mtx_mul", test_mtx_mul)) ||
+			(NULL == CU_add_test(suite_ops, "mtx_mulval", test_mtx_mulval)) ||
 			(NULL == CU_add_test(suite_ops, "mtx_add", test_mtx_add)) ||
 			(NULL == CU_add_test(suite_ops, "mtx_tr", test_mtx_tr)))
 	{

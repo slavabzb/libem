@@ -80,7 +80,7 @@ int mtx_fprint(FILE* stream, struct mtx const m)
 	return total;
 }
 
-int mtx_fill(struct mtx m, double val, double diagval)
+int mtx_fill(struct mtx m, mpfr_t val, mpfr_t diagval)
 {
 	size_t i, j;
 
@@ -95,16 +95,16 @@ int mtx_fill(struct mtx m, double val, double diagval)
 			{
 				if (i == j)
 				{
-					mpfr_set_d(*ptr, diagval, MPFR_RNDD);
+					mpfr_set(*ptr, diagval, MPFR_RNDD);
 				}
 				else
 				{
-					mpfr_set_d(*ptr, val, MPFR_RNDD);
+					mpfr_set(*ptr, val, MPFR_RNDD);
 				}
 			}
 			else
 			{
-				mpfr_set_d(*ptr, val, MPFR_RNDD);
+				mpfr_set(*ptr, val, MPFR_RNDD);
 			}
 		}
 	}
@@ -149,6 +149,28 @@ int mtx_mul(struct mtx rop, struct mtx const op1, struct mtx const op2)
 
 				mpfr_clear(tmp);
 			}
+		}
+	}
+
+	return 0;
+}
+
+int mtx_mulval(struct mtx rop, struct mtx const op1, mpfr_t op2)
+{
+	if (rop.nrows != op1.nrows || rop.ncols != op1.ncols)
+	{
+		return -1;
+	}
+	
+	size_t i, j;
+
+#pragma omp parallel for shared(rop) private(i, j) schedule(static)
+	for (i = 0; i < op1.nrows; ++i)
+	{
+		for (j = 0; j < op1.ncols; ++j)
+		{
+			mpfr_t* const prop = rop.storage + i * rop.ncols + j;
+			mpfr_mul(*prop, *prop, op2, MPFR_RNDD);
 		}
 	}
 

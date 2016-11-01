@@ -55,7 +55,7 @@ int mtx_fprint(FILE* stream, struct mtx const m);
  * if matrix is square
  * @return 0 on success, non-zero otherwise
  */
-int mtx_fill(struct mtx m, double val, double diagval);
+int mtx_fill(struct mtx m, mpfr_t val, mpfr_t diagval);
 
 /**
  * Multiplies the matrices.
@@ -71,6 +71,16 @@ int mtx_fill(struct mtx m, double val, double diagval);
  * @return 0 on success, non-zero otherwise
  */
 int mtx_mul(struct mtx rop, struct mtx const op1, struct mtx const op2);
+
+/**
+ * Multiplies the matrix by value.
+ * 
+ * @param rop the result matrix
+ * @param op1 a matrix
+ * @param op2 a value
+ * @return 0 on success, non-zero otherwise
+ */
+int mtx_mulval(struct mtx rop, struct mtx const op1, mpfr_t op2);
 
 /**
  * Adds the matrices.
