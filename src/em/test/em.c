@@ -9,30 +9,52 @@ struct mtx mx;
 mpfr_t fx;
 
 mpfr_prec_t const prec = 10;
+double const eps = 1e-3;
 
 int suite_init(void)
 {
-	if (0 != mtx_init(&ma, 2, 3, prec))
+	if (0 != mtx_init(&ma, 3, 2, prec))
 	{
 		return -1;
 	}
 	
-	if (0 != mtx_init(&mb, 2, 1, prec))
+	mpfr_set_ui(*(ma.storage + 0 * ma.ncols + 0), 1, MPFR_RNDD);
+	mpfr_set_ui(*(ma.storage + 0 * ma.ncols + 1), 0, MPFR_RNDD);
+	mpfr_set_ui(*(ma.storage + 1 * ma.ncols + 0), 0, MPFR_RNDD);
+	mpfr_set_ui(*(ma.storage + 1 * ma.ncols + 1), 2, MPFR_RNDD);
+	mpfr_set_ui(*(ma.storage + 2 * ma.ncols + 0), 3, MPFR_RNDD);
+	mpfr_set_ui(*(ma.storage + 2 * ma.ncols + 1), 2, MPFR_RNDD);
+	
+	if (0 != mtx_init(&mb, 3, 1, prec))
 	{
 		return -1;
 	}
 	
-	if (0 != mtx_init(&mc, 1, 3, prec))
+	mpfr_set_ui(*(mb.storage + 0 * mb.ncols + 0), 180, MPFR_RNDD);
+	mpfr_set_ui(*(mb.storage + 1 * mb.ncols + 0), 150, MPFR_RNDD);
+	mpfr_set_ui(*(mb.storage + 2 * mb.ncols + 0), 300, MPFR_RNDD);
+	
+	if (0 != mtx_init(&mc, 1, 2, prec))
 	{
 		return -1;
 	}
 	
-	if (0 != mtx_init(&mx, 2, 1, prec))
+	mpfr_set_si(*(mc.storage + 0 * mc.ncols + 0), -3, MPFR_RNDD);
+	mpfr_set_si(*(mc.storage + 0 * mc.ncols + 1), -5, MPFR_RNDD);
+	
+	if (0 != mtx_init(&mx, 3, 1, prec))
 	{
 		return -1;
 	}
 	
 	mpfr_init2(fx, prec);
+
+	printf("\nma\n");
+	mtx_fprint(stdout, ma);
+	printf("\nmb\n");
+	mtx_fprint(stdout, mb);
+	printf("\nmc\n");
+	mtx_fprint(stdout, mc);
 	
 	return 0;
 }
@@ -49,7 +71,7 @@ int suite_clean(void)
 
 void test_em_optimize(void)
 {
-	CU_ASSERT(0 == em_oprimize(&fx, &mx, ma, mb, mc));
+	CU_ASSERT(0 == em_optimize(&fx, &mx, ma, mb, mc, eps));
 }
 
 int main()
