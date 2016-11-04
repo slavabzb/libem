@@ -18,6 +18,17 @@ if(CUNIT_FOUND)
 	)
 endif()
 
+find_package(GMP)
+if(GMP_FOUND)
+	include_directories(
+		${GMP_INCLUDE_DIR}
+	)
+	set(link_libraries
+		${link_libraries}
+		${GMP_LIBRARIES}
+	)
+endif()
+
 file(GLOB src_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "src/*.c")
 
 add_library(

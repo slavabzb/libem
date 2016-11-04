@@ -31,7 +31,8 @@ int em_check_dimensions(struct mtx* const x,
 		struct mtx const b,
 		struct mtx const c);
 
-int em_optimize(mpfr_t* const fx,
+int em_optimize(mpz_t* const niters,
+		mpfr_t* const fx,
 		struct mtx* const x,
 		struct mtx const a,
 		struct mtx const b,
@@ -77,19 +78,16 @@ int em_optimize(mpfr_t* const fx,
 	mpfr_clear(tmp);
 	
 	mpz_t iter;
-	mpz_t maxiter;
-	mpz_init(maxiter);
-	if (em_set_maxiter(&maxiter, a, b, c, R2, eps))
+	if (em_set_maxiter(niters, a, b, c, R2, eps))
 		return -1;
 	
 	mpfr_clear(R2);
 	
-	for (mpz_init_set_ui(iter, 0); mpz_cmp(iter, maxiter) < 0; mpz_add_ui(iter, iter, 1))
+	for (mpz_init_set_ui(iter, 0); mpz_cmp(iter, *niters) < 0; mpz_add_ui(iter, iter, 1))
 	{
 		gmp_printf("%Zd ", iter);
 	}
 	
-	mpz_clear(maxiter);
 	mpz_clear(iter);
 	
 	return 0;
@@ -169,18 +167,17 @@ int em_set_maxiter(mpz_t* const maxiter,
 		mpfr_t* const ptr = c.storage + 0 * c.ncols + i;
 		mpfr_mul(tmp1, *ptr, *ptr, MPFR_RNDD);
 		mpfr_add(tmp0, tmp0, tmp1, MPFR_RNDD);
-	}
+	}	
+	mpfr_sqrt(tmp0, tmp0, MPFR_RNDD);
 	
-	mpfr_sqrt(tmp0, tmp0, MPFR_RNDD);	
 	mpfr_set_ui(tmp1, 0, MPFR_RNDD);
-	
 	for (i = 0; i < b.nrows; ++i)
 	{
 		mpfr_t* const ptr = b.storage + i * b.ncols + 0;
 		mpfr_add(tmp1, tmp1, *ptr, MPFR_RNDD);
 	}
-	
 	mpfr_sqrt(tmp1, tmp1, MPFR_RNDD);
+	
 	mpfr_ui_div(tmp1, 1, tmp1, MPFR_RNDD);
 	mpfr_mul(tmp0, tmp0, tmp1, MPFR_RNDD);
 	mpfr_mul(tmp0, tmp0, R2, MPFR_RNDD);
