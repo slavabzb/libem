@@ -11,7 +11,7 @@ int em_set_default_prec(mpfr_prec_t* const prec,
 		struct mtx const a,
 		mpz_t size);
 
-int em_set_maxiter(size_t* const maxiter,
+int em_set_maxiter(mpz_t* const maxiter,
 		struct mtx const a,
 		struct mtx const b,
 		struct mtx const c,
@@ -76,17 +76,21 @@ int em_optimize(mpfr_t* const fx,
 		return -1;
 	mpfr_clear(tmp);
 	
-	size_t iter;
-	size_t maxiter;
+	mpz_t iter;
+	mpz_t maxiter;
+	mpz_init(maxiter);
 	if (em_set_maxiter(&maxiter, a, b, c, R2, eps))
 		return -1;
 	
 	mpfr_clear(R2);
 	
-	for (iter = 0; iter < maxiter; ++iter)
+	for (mpz_init_set_ui(iter, 0); mpz_cmp(iter, maxiter) < 0; mpz_add_ui(iter, iter, 1))
 	{
-		printf("%d ", iter);
+		gmp_printf("%Zd ", iter);
 	}
+	
+	mpz_clear(maxiter);
+	mpz_clear(iter);
 	
 	return 0;
 }
@@ -146,7 +150,7 @@ int em_set_default_prec(mpfr_prec_t* const prec,
 	return 0;
 }
 
-int em_set_maxiter(size_t* const maxiter,
+int em_set_maxiter(mpz_t* const maxiter,
 		struct mtx const a,
 		struct mtx const b,
 		struct mtx const c,
@@ -193,12 +197,10 @@ int em_set_maxiter(size_t* const maxiter,
 	mpfr_mul_ui(tmp1, tmp1, 2, MPFR_RNDD);
 	mpfr_mul(tmp0, tmp0, tmp1, MPFR_RNDD);
 	
-	*maxiter = mpfr_get_ui(tmp0, MPFR_RNDD);
+	mpfr_get_z(*maxiter, tmp0, MPFR_RNDD);
 	
-	if (errno == EDOM || errno == ERANGE)
-	{
+	if (errno == ERANGE)
 		return -1;
-	}
 	
 	mpfr_clear(tmp0);
 	mpfr_clear(tmp1);
@@ -228,9 +230,7 @@ int em_set_size(mpz_t* const size,
 	mpfr_get_z(*size, tmp0, MPFR_RNDD);
 	
 	if (errno == ERANGE)
-	{
 		return -1;
-	}
 	
 	mpfr_clear(tmp0);
 	
