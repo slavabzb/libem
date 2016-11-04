@@ -3,7 +3,7 @@
 #include <em/em.h>
 #include <errno.h>
 
-int em_set_r2(double* const R2,
+int em_set_r2(mpfr_t* const R2,
 		size_t n,
 		mpz_t size);
 
@@ -15,8 +15,8 @@ int em_set_maxiter(size_t* const maxiter,
 		struct mtx const a,
 		struct mtx const b,
 		struct mtx const c,
-		double const R2,
-		double const eps);
+		mpfr_t R2,
+		double eps);
 
 int em_set_size(mpz_t* const size,
 		struct mtx const a,
@@ -62,19 +62,26 @@ int em_optimize(mpfr_t* const fx,
 	if (mtx_init(&H, a.ncols, a.ncols, prec))
 		return -1;
 	
-	double R2;
+	mpfr_t R2;
+	mpfr_init2(R2, prec);
 	if (em_set_r2(&R2, a.ncols, size))
 		return -1;
 	
 	mpz_clear(size);
 	
-	if (mtx_fill_d(H, 0, R2))
+	mpfr_t tmp;
+	mpfr_init2(tmp, prec);
+	mpfr_set_ui(tmp, 0, MPFR_RNDD);
+	if (mtx_fill(H, tmp, R2))
 		return -1;
+	mpfr_clear(tmp);
 	
-	size_t iter = 0;
-	size_t maxiter = 0;
+	size_t iter;
+	size_t maxiter;
 	if (em_set_maxiter(&maxiter, a, b, c, R2, eps))
 		return -1;
+	
+	mpfr_clear(R2);
 	
 	for (iter = 0; iter < maxiter; ++iter)
 	{
@@ -84,7 +91,7 @@ int em_optimize(mpfr_t* const fx,
 	return 0;
 }
 
-int em_set_r2(double* const R2,
+int em_set_r2(mpfr_t* const R2,
 		size_t n,
 		mpz_t size)
 {
@@ -102,11 +109,10 @@ int em_set_r2(double* const R2,
 	
 	mpfr_mul(tmp1, tmp1, tmp2, MPFR_RNDD);
 	
-	*R2 = mpfr_get_d(tmp1, MPFR_RNDD);
+	mpfr_set(*R2, tmp1, MPFR_RNDD);
 	
 	mpfr_clear(tmp2);
 	mpfr_clear(tmp1);
-	
 	mpz_clear(tmp0);
 	
 	return 0;
@@ -144,8 +150,8 @@ int em_set_maxiter(size_t* const maxiter,
 		struct mtx const a,
 		struct mtx const b,
 		struct mtx const c,
-		double const R2,
-		double const eps)
+		mpfr_t R2,
+		double eps)
 {
 	mpfr_t tmp0;
 	mpfr_init_set_ui(tmp0, 0, MPFR_RNDD);
@@ -173,7 +179,7 @@ int em_set_maxiter(size_t* const maxiter,
 	mpfr_sqrt(tmp1, tmp1, MPFR_RNDD);
 	mpfr_ui_div(tmp1, 1, tmp1, MPFR_RNDD);
 	mpfr_mul(tmp0, tmp0, tmp1, MPFR_RNDD);
-	mpfr_mul_d(tmp0, tmp0, R2, MPFR_RNDD);
+	mpfr_mul(tmp0, tmp0, R2, MPFR_RNDD);
 	mpfr_log(tmp0, tmp0, MPFR_RNDD);
 	
 	mpfr_set_d(tmp1, eps, MPFR_RNDD);
