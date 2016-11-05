@@ -3,6 +3,11 @@
 #include <em/em.h>
 #include <errno.h>
 
+int em_check_constraints(size_t* const nrow,
+		struct mtx const y,
+		struct mtx const a,
+		struct mtx const b);
+
 int em_set_r2(mpfr_t* const R2,
 		size_t n,
 		mpz_t size);
@@ -31,9 +36,10 @@ int em_check_dimensions(struct mtx* const x,
 		struct mtx const b,
 		struct mtx const c);
 
-int em_optimize(mpz_t* const niters,
-		mpfr_t* const fx,
+int em_optimize(mpfr_t* const fx,
 		struct mtx* const x,
+		mpfr_prec_t* const prec,
+		mpz_t* const niters,
 		struct mtx const a,
 		struct mtx const b,
 		struct mtx const c,
@@ -48,30 +54,29 @@ int em_optimize(mpz_t* const niters,
 	if (em_set_size(&size, a, b, c))
 		return -1;
 	
-	mpfr_prec_t prec;
-	if (em_set_default_prec(&prec, a, size))
+	if (em_set_default_prec(prec, a, size))
 		return -1;
 	
 	struct mtx y;
-	if (mtx_init(&y, a.nrows, 1, prec))
+	if (mtx_init(&y, a.nrows, 1, *prec))
 		return -1;
 	
 	if (mtx_fill_d(y, 0.f, 0.f))
 		return -1;
 	
 	struct mtx H;
-	if (mtx_init(&H, a.ncols, a.ncols, prec))
+	if (mtx_init(&H, a.ncols, a.ncols, *prec))
 		return -1;
 	
 	mpfr_t R2;
-	mpfr_init2(R2, prec);
+	mpfr_init2(R2, *prec);
 	if (em_set_r2(&R2, a.ncols, size))
 		return -1;
 	
 	mpz_clear(size);
 	
 	mpfr_t tmp;
-	mpfr_init2(tmp, prec);
+	mpfr_init2(tmp, *prec);
 	mpfr_set_ui(tmp, 0, MPFR_RNDD);
 	if (mtx_fill(H, tmp, R2))
 		return -1;
@@ -85,12 +90,77 @@ int em_optimize(mpz_t* const niters,
 	
 	for (mpz_init_set_ui(iter, 0); mpz_cmp(iter, *niters) < 0; mpz_add_ui(iter, iter, 1))
 	{
+		size_t idx = 0;
+		
+		if (em_check_constraints(&idx, y, a, b))
+		{
+			
+		}
+		else
+		{
+			
+		}
+
+		printf("\nidx: %d\n", idx);
+	
+	
 		gmp_printf("%Zd ", iter);
 	}
 	
 	mpz_clear(iter);
 	
 	return 0;
+}
+
+int em_check_constraints(size_t* const nrow,
+		struct mtx const y,
+		struct mtx const a,
+		struct mtx const b)
+{
+	size_t i, j;
+	
+	mpfr_t tmp0;
+	mpfr_t sum;
+	mpfr_t max;
+	
+	mpfr_init(tmp0);
+	mpfr_init(sum);
+	mpfr_init_set_ui(max, 0, MPFR_RNDD);
+	
+	for (i = 0; i < a.nrows; ++i)
+	{
+		mpfr_t* const yptr = y.storage + i * y.ncols;
+		mpfr_t* const bptr = b.storage + i * b.ncols;
+				
+		mpfr_set_ui(sum, 0, MPFR_RNDD);
+		
+		for (j = 0; j < a.ncols; ++j)
+		{
+			mpfr_t* const aptr = a.storage + i * a.ncols + j;
+			
+			mpfr_mul(tmp0, *aptr, *yptr, MPFR_RNDD);
+			mpfr_add(sum, sum, tmp0, MPFR_RNDD);
+		}
+		
+		if (mpfr_cmp(sum, *bptr) >= 0)
+		{
+			mpfr_sub(tmp0, *bptr, sum, MPFR_RNDD);
+			
+			if (mpfr_cmp(tmp0, max) > 0)
+			{
+				*nrow = i;
+				mpfr_set(max, tmp0, MPFR_RNDD);
+			}
+		}
+	}
+	
+	int rop = mpfr_cmp_ui(max, 0);
+	
+	mpfr_clear(max);
+	mpfr_clear(sum);
+	mpfr_clear(tmp0);
+	
+	return rop;
 }
 
 int em_set_r2(mpfr_t* const R2,

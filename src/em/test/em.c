@@ -9,7 +9,7 @@ struct mtx mx;
 mpfr_t fx;
 mpz_t niters;
 
-mpfr_prec_t const prec = 10;
+mpfr_prec_t prec = 10;
 double const eps = 1e-3;
 
 int suite_init(void)
@@ -68,12 +68,12 @@ int suite_clean(void)
 
 void test_em_optimize(void)
 {
-	CU_ASSERT(0 == em_optimize(&niters, &fx, &mx, ma, mb, mc, eps));
+	CU_ASSERT(0 == em_optimize(&fx, &mx, &prec, &niters, ma, mb, mc, eps));
 	
-	gmp_printf("\nniters: %Zd\n", niters);
 	mpfr_printf("\nfx: %Rf\n", fx);
 	printf("\nmx\n");
 	mtx_fprint(stdout, mx);
+	gmp_printf("\nprec: %ld\nniters: %Zd\n", prec, niters);
 }
 
 int main()
