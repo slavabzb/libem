@@ -56,21 +56,17 @@ int em_optimize(mpfr_t* const fx,
 	
 	if (em_set_default_prec(prec, a, size))
 		return -1;
-	
-	struct mtx y;
-	if (mtx_init(&y, a.nrows, 1, *prec))
-		return -1;
-	
-	if (mtx_fill_d(y, 0.f, 0.f))
+		
+	if (mtx_fill_d(*x, 0.f, 0.f))
 		return -1;
 	
 	struct mtx H;
-	if (mtx_init(&H, a.ncols, a.ncols, *prec))
+	if (mtx_init(&H, a.nrows, a.nrows, *prec))
 		return -1;
 	
 	mpfr_t R2;
 	mpfr_init2(R2, *prec);
-	if (em_set_r2(&R2, a.ncols, size))
+	if (em_set_r2(&R2, a.nrows, size))
 		return -1;
 	
 	mpz_clear(size);
@@ -80,34 +76,93 @@ int em_optimize(mpfr_t* const fx,
 	mpfr_set_ui(tmp, 0, MPFR_RNDD);
 	if (mtx_fill(H, tmp, R2))
 		return -1;
-	mpfr_clear(tmp);
 	
 	mpz_t iter;
 	if (em_set_maxiter(niters, a, b, c, R2, eps))
 		return -1;
 	
 	mpfr_clear(R2);
+
+	struct mtx g;
+	g.nrows = c.nrows;
+	g.ncols = c.ncols;
+	
+	struct mtx gt;
+	if (mtx_init(&gt, g.ncols, g.nrows, *prec))
+		return -1;
+	
+	struct mtx Hg;
+	if (mtx_init(&Hg, H.nrows, gt.ncols, *prec))
+		return -1;
+	
+	struct mtx Hgtmp;
+	if (mtx_init(&Hgtmp, Hg.nrows, Hg.ncols, *prec))
+		return -1;
+		
+	struct mtx gtH;
+	if (mtx_init(&gtH, gt.nrows, H.ncols, *prec))
+		return -1;
+	
+	mpfr_t Hgg;
+	mpfr_init(Hgg);
 	
 	for (mpz_init_set_ui(iter, 0); mpz_cmp(iter, *niters) < 0; mpz_add_ui(iter, iter, 1))
 	{
-		size_t idx = 0;
+		g.storage = c.storage;
 		
-		if (em_check_constraints(&idx, y, a, b))
+		size_t idx = 0;
+		if (em_check_constraints(&idx, *x, a, b))
 		{
-			
-		}
-		else
-		{
-			
+			g.storage = a.storage + idx * a.ncols;
 		}
 
-		printf("\nidx: %d\n", idx);
-	
-	
+		if (mtx_tr(gt, g))
+			return -1;
+		
+		if (mtx_mul(Hg, H, gt))
+			return -1;
+		
+		mpfr_set_ui(Hgg, 0, MPFR_RNDD);
+		
+		size_t i;
+		for (i = 0; i < Hg.nrows; ++i)
+		{
+			mpfr_t* const Hgptr = Hg.storage + i * Hg.ncols;
+			mpfr_t* const gptr = g.storage + 0 * g.ncols + i;
+			
+			mpfr_mul(tmp, *Hgptr, *gptr, MPFR_RNDD);
+			mpfr_add(Hgg, Hgg, tmp, MPFR_RNDD);
+		}
+		
+		mpfr_sqrt(tmp, Hgg, MPFR_RNDD);
+		mpfr_mul_ui(tmp, tmp, a.ncols + 1, MPFR_RNDD);
+		mpfr_si_div(tmp, -1, tmp, MPFR_RNDD);
+		
+		if (mtx_mulval(Hgtmp, Hg, tmp))
+			return -1;
+		
+		if (mtx_add(*x, *x, Hgtmp))
+			return -1;
+		
+		
+		mtx_fprint(stdout, Hg);
+		printf("\nHg size: %d x %d\n", Hg.nrows, Hg.ncols);
+		printf("\ng size: %d x %d\n", g.nrows, g.ncols);
+		
 		gmp_printf("%Zd ", iter);
 	}
 	
+	mpfr_clear(Hgg);
 	mpz_clear(iter);
+	mpfr_clear(tmp);
+	
+	if (mtx_clear(Hg) ||
+			mtx_clear(gt) ||
+			mtx_clear(gtH) ||
+			mtx_clear(Hgtmp))
+	{
+		return -1;
+	}
 	
 	return 0;
 }
