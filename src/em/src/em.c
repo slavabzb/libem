@@ -53,7 +53,7 @@ int em_optimize(mpfr_t* const fx,
 	
 	if (em_set_size(&size, a, b, c))
 		return -1;
-	
+		
 	if (em_set_default_prec(prec, a, size))
 		return -1;
 		
@@ -61,12 +61,12 @@ int em_optimize(mpfr_t* const fx,
 		return -1;
 	
 	struct mtx H;
-	if (mtx_init(&H, a.nrows, a.nrows, *prec))
+	if (mtx_init(&H, a.ncols, a.ncols, *prec))
 		return -1;
 	
 	mpfr_t R2;
 	mpfr_init2(R2, *prec);
-	if (em_set_r2(&R2, a.nrows, size))
+	if (em_set_r2(&R2, a.ncols, size))
 		return -1;
 	
 	mpz_clear(size);
@@ -309,8 +309,8 @@ int em_set_maxiter(mpz_t* const maxiter,
 	mpfr_log(tmp0, tmp0, MPFR_RNDD);
 	
 	mpfr_set_d(tmp1, eps, MPFR_RNDD);
-	mpfr_abs(tmp1, tmp1, MPFR_RNDD);
 	mpfr_log(tmp1, tmp1, MPFR_RNDD);
+	mpfr_abs(tmp1, tmp1, MPFR_RNDD);
 	
 	mpfr_add(tmp0, tmp0, tmp1, MPFR_RNDD);
 	
@@ -400,7 +400,7 @@ int em_check_dimensions(struct mtx* const x,
 			|| a.ncols != c.ncols
 			|| b.ncols != 1
 			|| c.nrows != 1
-			|| x->nrows != a.nrows
+			|| x->nrows != a.ncols
 			|| x->ncols != 1)
 	{
 		return -1;

@@ -10,7 +10,7 @@ mpfr_t fx;
 mpz_t niters;
 
 mpfr_prec_t prec = 10;
-double const eps = 1e-3;
+double const eps = 1e-6;
 
 int suite_init(void)
 {
@@ -37,7 +37,7 @@ int suite_init(void)
 	mpfr_set_si(*(mc.storage + 0 * mc.ncols + 0), -3, MPFR_RNDD);
 	mpfr_set_si(*(mc.storage + 0 * mc.ncols + 1), -5, MPFR_RNDD);
 	
-	if (mtx_init(&mx, 3, 1, prec))
+	if (mtx_init(&mx, 2, 1, prec))
 		return -1;
 	
 	mpfr_init2(fx, prec);
