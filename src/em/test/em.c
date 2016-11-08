@@ -10,7 +10,7 @@ mpfr_t fx;
 mpz_t niters;
 
 mpfr_prec_t prec = 10;
-double const eps = 1e-6;
+double const eps = 1e-3;
 
 int suite_init(void)
 {

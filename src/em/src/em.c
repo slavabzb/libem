@@ -95,10 +95,18 @@ int em_optimize(mpfr_t* const fx,
 	if (mtx_init(&Hg, H.nrows, gt.ncols, *prec))
 		return -1;
 	
+	struct mtx Hgt;
+	if (mtx_init(&Hgt, Hg.ncols, Hg.nrows, *prec))
+		return -1;
+	
 	struct mtx Hgtmp;
 	if (mtx_init(&Hgtmp, Hg.nrows, Hg.ncols, *prec))
 		return -1;
-		
+	
+	struct mtx HgHgtmp;
+	if (mtx_init(&HgHgtmp, Hg.nrows, Hgt.ncols, *prec))
+		return -1;
+	
 	struct mtx gtH;
 	if (mtx_init(&gtH, gt.nrows, H.ncols, *prec))
 		return -1;
@@ -112,14 +120,15 @@ int em_optimize(mpfr_t* const fx,
 		
 		size_t idx = 0;
 		if (em_check_constraints(&idx, *x, a, b))
-		{
 			g.storage = a.storage + idx * a.ncols;
-		}
 
 		if (mtx_tr(gt, g))
 			return -1;
 		
 		if (mtx_mul(Hg, H, gt))
+			return -1;
+		
+		if (mtx_tr(Hgt, Hg))
 			return -1;
 		
 		mpfr_set_ui(Hgg, 0, MPFR_RNDD);
@@ -140,14 +149,33 @@ int em_optimize(mpfr_t* const fx,
 		
 		if (mtx_mulval(Hgtmp, Hg, tmp))
 			return -1;
-		
+				
 		if (mtx_add(*x, *x, Hgtmp))
 			return -1;
 		
+		if (mtx_mul(HgHgtmp, Hg, Hgt))
+			return -1;
 		
-		mtx_fprint(stdout, Hg);
-		printf("\nHg size: %d x %d\n", Hg.nrows, Hg.ncols);
-		printf("\ng size: %d x %d\n", g.nrows, g.ncols);
+		mpfr_set_ui(tmp, -2, MPFR_RNDD);
+		mpfr_div_ui(tmp, tmp, a.ncols + 1, MPFR_RNDD);
+		mpfr_div(tmp, tmp, Hgg, MPFR_RNDD);
+		
+		if (mtx_mulval(HgHgtmp, HgHgtmp, tmp))
+			return -1;
+		
+		if (mtx_add(H, H, HgHgtmp))
+			return -1;
+		
+		mpfr_set_ui(Hgg, a.ncols, MPFR_RNDD);
+		mpfr_mul(Hgg, Hgg, Hgg, MPFR_RNDD);
+		mpfr_sub_ui(Hgg, Hgg, 1, MPFR_RNDD);
+		
+		mpfr_set_ui(tmp, a.ncols, MPFR_RNDD);
+		mpfr_mul(tmp, tmp, tmp, MPFR_RNDD);
+		mpfr_div(tmp, tmp, Hgg, MPFR_RNDD);
+		
+		if (mtx_mulval(H, H, tmp))
+			return -1;
 		
 		gmp_printf("%Zd ", iter);
 	}
@@ -155,16 +183,10 @@ int em_optimize(mpfr_t* const fx,
 	mpfr_clear(Hgg);
 	mpz_clear(iter);
 	mpfr_clear(tmp);
-	
-	if (mtx_clear(Hg) ||
-			mtx_clear(gt) ||
-			mtx_clear(gtH) ||
-			mtx_clear(Hgtmp))
-	{
-		return -1;
-	}
-	
-	return 0;
+		
+	return mtx_clear(Hgt) || mtx_clear(Hg) ||
+			mtx_clear(gt) || mtx_clear(gtH) ||
+			mtx_clear(Hgtmp) || mtx_clear(HgHgtmp);
 }
 
 int em_check_constraints(size_t* const nrow,
@@ -184,13 +206,13 @@ int em_check_constraints(size_t* const nrow,
 	
 	for (i = 0; i < a.nrows; ++i)
 	{
-		mpfr_t* const yptr = y.storage + i * y.ncols;
 		mpfr_t* const bptr = b.storage + i * b.ncols;
 				
 		mpfr_set_ui(sum, 0, MPFR_RNDD);
 		
 		for (j = 0; j < a.ncols; ++j)
 		{
+			mpfr_t* const yptr = y.storage + j * y.ncols;
 			mpfr_t* const aptr = a.storage + i * a.ncols + j;
 			
 			mpfr_mul(tmp0, *aptr, *yptr, MPFR_RNDD);
@@ -199,7 +221,7 @@ int em_check_constraints(size_t* const nrow,
 		
 		if (mpfr_cmp(sum, *bptr) >= 0)
 		{
-			mpfr_sub(tmp0, *bptr, sum, MPFR_RNDD);
+			mpfr_sub(tmp0, sum, *bptr, MPFR_RNDD);
 			
 			if (mpfr_cmp(tmp0, max) > 0)
 			{

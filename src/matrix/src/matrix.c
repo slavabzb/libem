@@ -202,7 +202,9 @@ int mtx_mulval(struct mtx rop, struct mtx const op1, mpfr_t op2)
 		for (j = 0; j < op1.ncols; ++j)
 		{
 			mpfr_t* const prop = rop.storage + i * rop.ncols + j;
-			mpfr_mul(*prop, *prop, op2, MPFR_RNDD);
+			mpfr_t* const pop1 = op1.storage + i * op1.ncols + j;
+			
+			mpfr_mul(*prop, *pop1, op2, MPFR_RNDD);
 		}
 	}
 
