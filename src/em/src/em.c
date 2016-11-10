@@ -13,13 +13,13 @@ int em_set_r2(mpfr_t* const R2,
 		mpz_t size);
 
 int em_set_default_prec(mpfr_prec_t* const prec,
-		struct mtx const a,
+		size_t n,
 		mpz_t size);
 
 int em_set_maxiter(mpz_t* const maxiter,
-		struct mtx const a,
 		struct mtx const b,
 		struct mtx const c,
+		size_t n,
 		mpfr_t R2,
 		double eps);
 
@@ -28,7 +28,7 @@ int em_set_size(mpz_t* const size,
 		struct mtx const b,
 		struct mtx const c);
 
-int em_accum_size(mpz_t* const size,
+int em_accum_size(mpfr_t* const size,
 		struct mtx const m);
 
 int em_check_dimensions(struct mtx* const x,
@@ -48,25 +48,27 @@ int em_optimize(mpfr_t* const fx,
 	if (em_check_dimensions(x, a, b, c))
 		return -1;
 	
+	size_t const n = a.ncols;
+	
 	mpz_t size;
 	mpz_init(size);
 	
 	if (em_set_size(&size, a, b, c))
 		return -1;
-		
-	if (em_set_default_prec(prec, a, size))
+	
+	if (em_set_default_prec(prec, n, size))
 		return -1;
 		
 	if (mtx_fill_d(*x, 0.f, 0.f))
 		return -1;
 	
 	struct mtx H;
-	if (mtx_init(&H, a.ncols, a.ncols, *prec))
+	if (mtx_init(&H, n, n, *prec))
 		return -1;
 	
 	mpfr_t R2;
 	mpfr_init2(R2, *prec);
-	if (em_set_r2(&R2, a.ncols, size))
+	if (em_set_r2(&R2, n, size))
 		return -1;
 	
 	mpz_clear(size);
@@ -78,7 +80,7 @@ int em_optimize(mpfr_t* const fx,
 		return -1;
 	
 	mpz_t iter;
-	if (em_set_maxiter(niters, a, b, c, R2, eps))
+	if (em_set_maxiter(niters, b, c, n, R2, eps))
 		return -1;
 	
 	mpfr_clear(R2);
@@ -144,7 +146,7 @@ int em_optimize(mpfr_t* const fx,
 		}
 		
 		mpfr_sqrt(tmp, Hgg, MPFR_RNDD);
-		mpfr_mul_ui(tmp, tmp, a.ncols + 1, MPFR_RNDD);
+		mpfr_mul_ui(tmp, tmp, n + 1, MPFR_RNDD);
 		mpfr_si_div(tmp, -1, tmp, MPFR_RNDD);
 		
 		if (mtx_mulval(Hgtmp, Hg, tmp))
@@ -157,7 +159,7 @@ int em_optimize(mpfr_t* const fx,
 			return -1;
 		
 		mpfr_set_ui(tmp, -2, MPFR_RNDD);
-		mpfr_div_ui(tmp, tmp, a.ncols + 1, MPFR_RNDD);
+		mpfr_div_ui(tmp, tmp, n + 1, MPFR_RNDD);
 		mpfr_div(tmp, tmp, Hgg, MPFR_RNDD);
 		
 		if (mtx_mulval(HgHgtmp, HgHgtmp, tmp))
@@ -166,11 +168,11 @@ int em_optimize(mpfr_t* const fx,
 		if (mtx_add(H, H, HgHgtmp))
 			return -1;
 		
-		mpfr_set_ui(Hgg, a.ncols, MPFR_RNDD);
+		mpfr_set_ui(Hgg, n, MPFR_RNDD);
 		mpfr_mul(Hgg, Hgg, Hgg, MPFR_RNDD);
 		mpfr_sub_ui(Hgg, Hgg, 1, MPFR_RNDD);
 		
-		mpfr_set_ui(tmp, a.ncols, MPFR_RNDD);
+		mpfr_set_ui(tmp, n, MPFR_RNDD);
 		mpfr_mul(tmp, tmp, tmp, MPFR_RNDD);
 		mpfr_div(tmp, tmp, Hgg, MPFR_RNDD);
 		
@@ -268,7 +270,7 @@ int em_set_r2(mpfr_t* const R2,
 }
 
 int em_set_default_prec(mpfr_prec_t* const prec,
-		struct mtx const a,
+		size_t n,
 		mpz_t size)
 {
 	mpfr_t tmp0;
@@ -277,7 +279,8 @@ int em_set_default_prec(mpfr_prec_t* const prec,
 	mpfr_init_set_z(tmp0, size, MPFR_RNDD);
 	mpfr_mul_ui(tmp0, tmp0, 2, MPFR_RNDD);
 	
-	mpfr_init_set_ui(tmp1, a.ncols, MPFR_RNDD);
+	mpfr_init_set_ui(tmp1, n, MPFR_RNDD);
+	mpfr_log2(tmp1, tmp1, MPFR_RNDD);
 	mpfr_mul_ui(tmp1, tmp1, 2, MPFR_RNDD);
 	
 	mpfr_add(tmp0, tmp0,  tmp1, MPFR_RNDD);
@@ -296,9 +299,9 @@ int em_set_default_prec(mpfr_prec_t* const prec,
 }
 
 int em_set_maxiter(mpz_t* const maxiter,
-		struct mtx const a,
 		struct mtx const b,
 		struct mtx const c,
+		size_t n,
 		mpfr_t R2,
 		double eps)
 {
@@ -336,7 +339,7 @@ int em_set_maxiter(mpz_t* const maxiter,
 	
 	mpfr_add(tmp0, tmp0, tmp1, MPFR_RNDD);
 	
-	mpfr_set_ui(tmp1, a.ncols + 1, MPFR_RNDD);
+	mpfr_set_ui(tmp1, n + 1, MPFR_RNDD);
 	mpfr_sqr(tmp1, tmp1, MPFR_RNDD);
 	mpfr_mul_ui(tmp1, tmp1, 2, MPFR_RNDD);
 	mpfr_mul(tmp0, tmp0, tmp1, MPFR_RNDD);
@@ -357,31 +360,30 @@ int em_set_size(mpz_t* const size,
 		struct mtx const b,
 		struct mtx const c)
 {
-	mpz_set_ui(*size, 1);
+	mpfr_t tmp;
+	mpfr_init_set_ui(tmp, 1, MPFR_RNDD);
 	
-	if (em_accum_size(size, a)
-			|| em_accum_size(size, b)
-			|| em_accum_size(size, c))
+	if (em_accum_size(&tmp, a)
+			|| em_accum_size(&tmp, b)
+			|| em_accum_size(&tmp, c))
 	{
 		return -1;
 	}
 	
-	mpfr_t tmp0;
-	mpfr_init_set_z(tmp0, *size, MPFR_RNDD);
-	mpfr_log10(tmp0, tmp0, MPFR_RNDD);
-	mpfr_add_ui(tmp0, tmp0, a.nrows * a.ncols, MPFR_RNDD);
+	mpfr_log10(tmp, tmp, MPFR_RNDD);
+	mpfr_add_ui(tmp, tmp, a.nrows * a.ncols, MPFR_RNDD);
 	
-	mpfr_get_z(*size, tmp0, MPFR_RNDD);
+	mpfr_get_z(*size, tmp, MPFR_RNDD);
 	
 	if (errno == ERANGE)
 		return -1;
 	
-	mpfr_clear(tmp0);
+	mpfr_clear(tmp);
 	
 	return 0;
 }
 
-int em_accum_size(mpz_t* const size,
+int em_accum_size(mpfr_t* const size,
 		struct mtx const m)
 {	
 	int i, j;
@@ -401,8 +403,8 @@ int em_accum_size(mpz_t* const size,
 			if (0 != mpfr_cmp_ui(*ptr, 0))
 			{
 				mpfr_abs(tmp0, *ptr, MPFR_RNDD);
-				mpfr_get_z(tmp1, tmp0, MPFR_RNDD);
-				mpz_add(*size, *size, tmp1);
+				//mpfr_get_z(tmp1, tmp0, MPFR_RNDD);
+				mpfr_mul(*size, *size, tmp0, MPFR_RNDD);
 			}
 		}
 	}
