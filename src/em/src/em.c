@@ -62,6 +62,10 @@ int em_optimize(mpfr_t* const fx,
 	if (mtx_fill_d(*x, 0.f, 0.f))
 		return -1;
 	
+	struct mtx xtmp;
+	if (mtx_init(&xtmp, x->nrows, x->ncols, *prec))
+		return -1;
+	
 	struct mtx H;
 	if (mtx_init(&H, n, n, *prec))
 		return -1;
@@ -121,7 +125,7 @@ int em_optimize(mpfr_t* const fx,
 		g.storage = c.storage;
 		
 		size_t idx = 0;
-		if (em_check_constraints(&idx, *x, a, b))
+		if (!em_check_constraints(&idx, *x, a, b))
 			g.storage = a.storage + idx * a.ncols;
 
 		if (mtx_tr(gt, g))
@@ -151,14 +155,27 @@ int em_optimize(mpfr_t* const fx,
 		
 		if (mtx_mulval(Hgtmp, Hg, tmp))
 			return -1;
-				
-		if (mtx_add(*x, *x, Hgtmp))
+
+		if (mtx_add(xtmp, *x, Hgtmp))
+			return -1;
+		
+		size_t j;
+		for (i = 0; i < xtmp.nrows; ++i)
+		{
+			for (j = 0; j < xtmp.ncols; ++j)
+			{
+				if (mpfr_nan_p(*(xtmp.storage + i * xtmp.ncols + j)))
+					break;
+			}
+		}
+		
+		if (mtx_add(*x, *x, xtmp))
 			return -1;
 		
 		if (mtx_mul(HgHgtmp, Hg, Hgt))
 			return -1;
 		
-		mpfr_set_ui(tmp, -2, MPFR_RNDD);
+		mpfr_set_si(tmp, -2, MPFR_RNDD);
 		mpfr_div_ui(tmp, tmp, n + 1, MPFR_RNDD);
 		mpfr_div(tmp, tmp, Hgg, MPFR_RNDD);
 		
@@ -186,7 +203,7 @@ int em_optimize(mpfr_t* const fx,
 	mpz_clear(iter);
 	mpfr_clear(tmp);
 		
-	return mtx_clear(Hgt) || mtx_clear(Hg) ||
+	return mtx_clear(xtmp) || mtx_clear(Hgt) || mtx_clear(Hg) ||
 			mtx_clear(gt) || mtx_clear(gtH) ||
 			mtx_clear(Hgtmp) || mtx_clear(HgHgtmp);
 }
@@ -204,7 +221,8 @@ int em_check_constraints(size_t* const nrow,
 	
 	mpfr_init(tmp0);
 	mpfr_init(sum);
-	mpfr_init_set_ui(max, 0, MPFR_RNDD);
+	mpfr_init(max);
+	mpfr_set_inf(max, -1);
 	
 	for (i = 0; i < a.nrows; ++i)
 	{
@@ -233,7 +251,7 @@ int em_check_constraints(size_t* const nrow,
 		}
 	}
 	
-	int rop = mpfr_cmp_ui(max, 0);
+	int rop = mpfr_inf_p(max);
 	
 	mpfr_clear(max);
 	mpfr_clear(sum);
