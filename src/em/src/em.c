@@ -58,7 +58,7 @@ int em_optimize(mpfr_t* const fx,
 	
 	if (em_set_default_prec(prec, n, size))
 		return -1;
-		
+	
 	if (mtx_fill_d(*x, 0.f, 0.f))
 		return -1;
 	
@@ -120,7 +120,9 @@ int em_optimize(mpfr_t* const fx,
 	mpfr_t Hgg;
 	mpfr_init(Hgg);
 	
-	for (mpz_init_set_ui(iter, 0); mpz_cmp(iter, *niters) < 0; mpz_add_ui(iter, iter, 1))
+	int cond = 1;
+	
+	for (mpz_init_set_ui(iter, 0); cond && mpz_cmp(iter, *niters) < 0; mpz_add_ui(iter, iter, 1))
 	{
 		g.storage = c.storage;
 		
@@ -128,11 +130,17 @@ int em_optimize(mpfr_t* const fx,
 		if (!em_check_constraints(&idx, *x, a, b))
 			g.storage = a.storage + idx * a.ncols;
 
+		printf("\nidx: %d\n\ng\n", idx);
+		mtx_fprint(stdout, g);
+		
 		if (mtx_tr(gt, g))
 			return -1;
 		
 		if (mtx_mul(Hg, H, gt))
 			return -1;
+		
+		printf("\nHg\n");
+		mtx_fprint(stdout, Hg);
 		
 		if (mtx_tr(Hgt, Hg))
 			return -1;
@@ -148,6 +156,8 @@ int em_optimize(mpfr_t* const fx,
 			mpfr_mul(tmp, *Hgptr, *gptr, MPFR_RNDD);
 			mpfr_add(Hgg, Hgg, tmp, MPFR_RNDD);
 		}
+		
+		mpfr_printf("\nHgg: %Rf\n", Hgg);
 		
 		mpfr_sqrt(tmp, Hgg, MPFR_RNDD);
 		mpfr_mul_ui(tmp, tmp, n + 1, MPFR_RNDD);
@@ -165,12 +175,39 @@ int em_optimize(mpfr_t* const fx,
 			for (j = 0; j < xtmp.ncols; ++j)
 			{
 				if (mpfr_nan_p(*(xtmp.storage + i * xtmp.ncols + j)))
+				{
+					cond = 0;
+					mpz_set(*niters, iter);
 					break;
+				}
+			}
+			
+			if (!cond)
+				break;
+		}
+		
+		if (!cond)
+			break;
+		
+		printf("\ndx\n");
+		mtx_fprint(stdout, xtmp);
+		
+		for (i = 0; i < xtmp.nrows; ++i)
+		{
+			for (j = 0; j < xtmp.ncols; ++j)
+			{
+				mpfr_t* const xptr = x->storage + i * x->ncols + j;
+				mpfr_t* const rptr = xtmp.storage + i * xtmp.ncols + j;
+				
+				mpfr_set(*xptr, *rptr, MPFR_RNDD);
 			}
 		}
 		
-		if (mtx_add(*x, *x, xtmp))
-			return -1;
+		//if (mtx_add(*x, *x, xtmp))
+		//	return -1;
+		
+		printf("\nx\n");
+		mtx_fprint(stdout, *x);
 		
 		if (mtx_mul(HgHgtmp, Hg, Hgt))
 			return -1;
@@ -195,6 +232,13 @@ int em_optimize(mpfr_t* const fx,
 		
 		if (mtx_mulval(H, H, tmp))
 			return -1;
+		
+		printf("\nH\n");
+		mtx_fprint(stdout, H);
+		
+		static count = 0;
+		if (++count == 2)
+			//break;
 		
 		gmp_printf("%Zd ", iter);
 	}

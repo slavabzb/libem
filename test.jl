@@ -74,7 +74,7 @@ function check(x, a, b)
 end
 
 for iter in 1:maxiter
-	#println("iter: ", iter)
+	#println("\niter: ", iter)
 	
 	g = c
 	
@@ -96,9 +96,12 @@ for iter in 1:maxiter
 		break
 	end
 	
-	x = x - 1 / ((n + 1) * sqrt(Hgg)) * Hg
+	dx = - 1 / ((n + 1) * sqrt(Hgg)) * Hg
+	
+	x = x + dx
 	H = n^2/(n^2-1) * (H - 2/(n+1) * (Hg * (g' * H)) / Hgg)
 	
+	#println("dx: ", dx)
 	#println("x: ", x)
 	#println("H: ", H)
 	
