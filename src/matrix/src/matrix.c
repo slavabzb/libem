@@ -95,16 +95,16 @@ int mtx_fill(struct mtx m, mpfr_t val, mpfr_t diagval)
 			{
 				if (i == j)
 				{
-					mpfr_set(*ptr, diagval, MPFR_RNDD);
+					mpfr_set(*ptr, diagval, MPFR_RNDN);
 				}
 				else
 				{
-					mpfr_set(*ptr, val, MPFR_RNDD);
+					mpfr_set(*ptr, val, MPFR_RNDN);
 				}
 			}
 			else
 			{
-				mpfr_set(*ptr, val, MPFR_RNDD);
+				mpfr_set(*ptr, val, MPFR_RNDN);
 			}
 		}
 	}
@@ -127,16 +127,16 @@ int mtx_fill_d(struct mtx m, double val, double diagval)
 			{
 				if (i == j)
 				{
-					mpfr_set_d(*ptr, diagval, MPFR_RNDD);
+					mpfr_set_d(*ptr, diagval, MPFR_RNDN);
 				}
 				else
 				{
-					mpfr_set_d(*ptr, val, MPFR_RNDD);
+					mpfr_set_d(*ptr, val, MPFR_RNDN);
 				}
 			}
 			else
 			{
-				mpfr_set_d(*ptr, val, MPFR_RNDD);
+				mpfr_set_d(*ptr, val, MPFR_RNDN);
 			}
 		}
 	}
@@ -166,7 +166,7 @@ int mtx_mul(struct mtx rop, struct mtx const op1, struct mtx const op2)
 		for (j = 0; j < op2.ncols; ++j)
 		{
 			mpfr_t* const prop = rop.storage + i * rop.ncols + j;	
-			mpfr_set_ui(*prop, 0, MPFR_RNDD);
+			mpfr_set_ui(*prop, 0, MPFR_RNDN);
 
 			for (k = 0; k < op1.ncols; ++k)
 			{
@@ -176,8 +176,8 @@ int mtx_mul(struct mtx rop, struct mtx const op1, struct mtx const op2)
 				mpfr_t tmp;
 				mpfr_init2(tmp, prec);
 
-				mpfr_mul(tmp, *pop1, *pop2, MPFR_RNDD);
-				mpfr_add(*prop, *prop, tmp, MPFR_RNDD);
+				mpfr_mul(tmp, *pop1, *pop2, MPFR_RNDN);
+				mpfr_add(*prop, *prop, tmp, MPFR_RNDN);
 
 				mpfr_clear(tmp);
 			}
@@ -204,7 +204,7 @@ int mtx_mulval(struct mtx rop, struct mtx const op1, mpfr_t op2)
 			mpfr_t* const prop = rop.storage + i * rop.ncols + j;
 			mpfr_t* const pop1 = op1.storage + i * op1.ncols + j;
 			
-			mpfr_mul(*prop, *pop1, op2, MPFR_RNDD);
+			mpfr_mul(*prop, *pop1, op2, MPFR_RNDN);
 		}
 	}
 
@@ -230,7 +230,7 @@ int mtx_add(struct mtx rop, struct mtx const op1, struct mtx const op2)
 	{
 		for (j = 0; j < rop.ncols; ++j)
 		{
-			mpfr_add(*(rop.storage + i * rop.ncols + j), *(op1.storage + i * op1.ncols + j), *(op2.storage + i * op2.ncols + j), MPFR_RNDD);
+			mpfr_add(*(rop.storage + i * rop.ncols + j), *(op1.storage + i * op1.ncols + j), *(op2.storage + i * op2.ncols + j), MPFR_RNDN);
 		}
 	}
 
@@ -251,7 +251,7 @@ int mtx_tr(struct mtx rop, struct mtx const op)
 	{
 		for (j = 0; j < rop.ncols; ++j)
 		{
-			mpfr_set(*(rop.storage + i * rop.ncols + j), *(op.storage + j * op.ncols + i), MPFR_RNDD);
+			mpfr_set(*(rop.storage + i * rop.ncols + j), *(op.storage + j * op.ncols + i), MPFR_RNDN);
 		}
 	}
 

@@ -17,25 +17,25 @@ int suite_init(void)
 	if (mtx_init(&ma, 3, 2, prec))
 		return -1;
 	
-	mpfr_set_ui(*(ma.storage + 0 * ma.ncols + 0), 1, MPFR_RNDD);
-	mpfr_set_ui(*(ma.storage + 0 * ma.ncols + 1), 0, MPFR_RNDD);
-	mpfr_set_ui(*(ma.storage + 1 * ma.ncols + 0), 0, MPFR_RNDD);
-	mpfr_set_ui(*(ma.storage + 1 * ma.ncols + 1), 2, MPFR_RNDD);
-	mpfr_set_ui(*(ma.storage + 2 * ma.ncols + 0), 3, MPFR_RNDD);
-	mpfr_set_ui(*(ma.storage + 2 * ma.ncols + 1), 2, MPFR_RNDD);
+	mpfr_set_ui(*(ma.storage + 0 * ma.ncols + 0), 1, MPFR_RNDN);
+	mpfr_set_ui(*(ma.storage + 0 * ma.ncols + 1), 0, MPFR_RNDN);
+	mpfr_set_ui(*(ma.storage + 1 * ma.ncols + 0), 0, MPFR_RNDN);
+	mpfr_set_ui(*(ma.storage + 1 * ma.ncols + 1), 2, MPFR_RNDN);
+	mpfr_set_ui(*(ma.storage + 2 * ma.ncols + 0), 3, MPFR_RNDN);
+	mpfr_set_ui(*(ma.storage + 2 * ma.ncols + 1), 2, MPFR_RNDN);
 	
 	if (mtx_init(&mb, 3, 1, prec))
 		return -1;
 	
-	mpfr_set_ui(*(mb.storage + 0 * mb.ncols + 0), 180, MPFR_RNDD);
-	mpfr_set_ui(*(mb.storage + 1 * mb.ncols + 0), 150, MPFR_RNDD);
-	mpfr_set_ui(*(mb.storage + 2 * mb.ncols + 0), 300, MPFR_RNDD);
+	mpfr_set_ui(*(mb.storage + 0 * mb.ncols + 0), 180, MPFR_RNDN);
+	mpfr_set_ui(*(mb.storage + 1 * mb.ncols + 0), 150, MPFR_RNDN);
+	mpfr_set_ui(*(mb.storage + 2 * mb.ncols + 0), 300, MPFR_RNDN);
 	
 	if (mtx_init(&mc, 1, 2, prec))
 		return -1;
 	
-	mpfr_set_si(*(mc.storage + 0 * mc.ncols + 0), -3, MPFR_RNDD);
-	mpfr_set_si(*(mc.storage + 0 * mc.ncols + 1), -5, MPFR_RNDD);
+	mpfr_set_si(*(mc.storage + 0 * mc.ncols + 0), -3, MPFR_RNDN);
+	mpfr_set_si(*(mc.storage + 0 * mc.ncols + 1), -5, MPFR_RNDN);
 	
 	if (mtx_init(&mx, 2, 1, prec))
 		return -1;

@@ -85,7 +85,7 @@ int suite_ops_init(void)
 	{
 		for (j = 0; j < ma.ncols; ++j)
 		{
-			mpfr_set_ui(*(ma.storage + i * ma.ncols + j), i + j, MPFR_RNDD);
+			mpfr_set_ui(*(ma.storage + i * ma.ncols + j), i + j, MPFR_RNDN);
 		}
 	}
 	
@@ -93,17 +93,17 @@ int suite_ops_init(void)
 	{
 		for (j = 0; j < mb.ncols; ++j)
 		{
-			mpfr_set_ui(*(mb.storage + i * mb.ncols + j), 2*i + j, MPFR_RNDD);
+			mpfr_set_ui(*(mb.storage + i * mb.ncols + j), 2*i + j, MPFR_RNDN);
 		}
 	}
 	
 	val_d = 1.f;
 	diagval_d = 2.f;
 	
-	mpfr_init_set_d(val, val_d, MPFR_RNDD);
-	mpfr_init_set_d(diagval, diagval_d, MPFR_RNDD);
+	mpfr_init_set_d(val, val_d, MPFR_RNDN);
+	mpfr_init_set_d(diagval, diagval_d, MPFR_RNDN);
 	
-	mpfr_init_set_d(mulval, 3.f, MPFR_RNDD);
+	mpfr_init_set_d(mulval, 3.f, MPFR_RNDN);
 	
 	return 0;
 }
@@ -206,7 +206,7 @@ void test_mtx_mul(void)
 			
 			mpfr_t tmp1;
 			mpfr_init2(tmp1, mpfr_get_prec(*prop));
-			mpfr_set_ui(tmp1, 0, MPFR_RNDD);
+			mpfr_set_ui(tmp1, 0, MPFR_RNDN);
 			
 			for (k = 0; k < ma.ncols; ++k)
 			{
@@ -216,8 +216,8 @@ void test_mtx_mul(void)
 				mpfr_t tmp2;
 				mpfr_init2(tmp2, mpfr_get_prec(*prop));
 				
-				mpfr_mul(tmp2, *pop1, *pop2, MPFR_RNDD);
-				mpfr_add(tmp1, tmp1, tmp2, MPFR_RNDD);
+				mpfr_mul(tmp2, *pop1, *pop2, MPFR_RNDN);
+				mpfr_add(tmp1, tmp1, tmp2, MPFR_RNDN);
 				
 				mpfr_clear(tmp2);
 			}
@@ -242,7 +242,7 @@ void test_mtx_mulval(void)
 		{
 			mpfr_t tmp;
 			mpfr_init2(tmp, 10);
-			mpfr_div(tmp, *(ma.storage + i * ma.ncols + j), mulval, MPFR_RNDD);
+			mpfr_div(tmp, *(ma.storage + i * ma.ncols + j), mulval, MPFR_RNDN);
 			CU_ASSERT(0 == mpfr_cmp_ui(tmp, i + j));
 			mpfr_clear(tmp);
 		}
@@ -262,7 +262,7 @@ void test_mtx_add(void)
 		for (j = 0; j < mb.ncols; ++j)
 		{
 			mpfr_t tmp;
-			mpfr_init_set_d(tmp, 2 * val_d, MPFR_RNDD);
+			mpfr_init_set_d(tmp, 2 * val_d, MPFR_RNDN);
 			CU_ASSERT(0 == mpfr_cmp(*(mb.storage + i * mb.ncols + j), tmp));
 			mpfr_clear(tmp);
 		}
