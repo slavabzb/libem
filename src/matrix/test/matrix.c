@@ -9,6 +9,7 @@
 struct mtx ma;
 struct mtx mb;
 struct mtx mc;
+struct mtx macopy;
 
 struct mtx msquare;
 
@@ -60,24 +61,19 @@ void test_mtx_clear(void)
 int suite_ops_init(void)
 {
 	if (mtx_init(&ma, 2, 3, 10))
-	{
 		return -1;
-	}
+	
+	if (mtx_init(&macopy, ma.nrows, ma.ncols, 10))
+		return -1;
 	
 	if (mtx_init(&mb, 3, 4, 10))
-	{
 		return -1;
-	}
 	
 	if (mtx_init(&mc, 2, 4, 10))
-	{
 		return -1;
-	}
 	
 	if (mtx_init(&msquare, 2, 2, 10))
-	{
 		return -1;
-	}
 	
 	size_t i, j;
 	
@@ -117,6 +113,7 @@ int suite_ops_clean(void)
 	return mtx_clear(ma) ||
 			mtx_clear(mb) ||
 			mtx_clear(mc) ||
+			mtx_clear(macopy) ||
 			mtx_clear(msquare);
 }
 
@@ -186,6 +183,24 @@ void test_mtx_fill_d(void)
 			{
 				CU_ASSERT(0 == mpfr_cmp_d(*ptr, val_d));
 			}
+		}
+	}
+}
+
+void test_mtx_copy(void)
+{
+	CU_ASSERT(0 == mtx_copy(macopy, ma));
+	
+	size_t i, j;
+	
+	for (i = 0; i < ma.nrows; ++i)
+	{
+		for (j = 0; j < ma.ncols; ++j)
+		{
+			mpfr_t* const lhs = ma.storage + i * ma.ncols + j;
+			mpfr_t* const rhs = macopy.storage + i * macopy.ncols + j;
+			
+			CU_ASSERT(0 == mpfr_cmp(*lhs, *rhs));
 		}
 	}
 }
@@ -337,6 +352,7 @@ int main()
 
 	if ((NULL == CU_add_test(suite_ops, "mtx_fill", test_mtx_fill)) ||
 			(NULL == CU_add_test(suite_ops, "mtx_fill_d", test_mtx_fill_d)) ||
+			(NULL == CU_add_test(suite_ops, "mtx_copy", test_mtx_copy)) ||
 			(NULL == CU_add_test(suite_ops, "mtx_mul", test_mtx_mul)) ||
 			(NULL == CU_add_test(suite_ops, "mtx_mulval", test_mtx_mulval)) ||
 			(NULL == CU_add_test(suite_ops, "mtx_add", test_mtx_add)) ||

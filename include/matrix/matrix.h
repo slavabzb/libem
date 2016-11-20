@@ -59,6 +59,15 @@ int mtx_fill(struct mtx m, mpfr_t val, mpfr_t diagval);
 int mtx_fill_d(struct mtx m, double val, double diagval);
 
 /**
+ * Copies the matrix.
+ * 
+ * @param rop a copy of op matrix
+ * @param op a source matrix to be copied
+ * @return 0 on success, non-zero otherwise
+ */
+int mtx_copy(struct mtx rop, struct mtx const op);
+
+/**
  * Multiplies the matrices.
  * 
  * The dimensions of the matrices must be as follows:

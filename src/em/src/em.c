@@ -196,17 +196,9 @@ int em_optimize(mpfr_t* const fx,
 		//printf("\ndx\n");
 		//mtx_fprint(stdout, xtmp);
 		
-		for (i = 0; i < xtmp.nrows; ++i)
-		{
-			for (j = 0; j < xtmp.ncols; ++j)
-			{
-				mpfr_t* const xptr = x->storage + i * x->ncols + j;
-				mpfr_t* const rptr = xtmp.storage + i * xtmp.ncols + j;
+		if (mtx_copy(*x, xtmp))
+			return -1;
 				
-				mpfr_set(*xptr, *rptr, MPFR_RNDN);
-			}
-		}
-		
 		//printf("\nx\n");
 		//mtx_fprint(stdout, *x);
 		

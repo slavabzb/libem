@@ -43,15 +43,6 @@ int suite_init(void)
 	mpfr_init2(fx, prec);
 	mpz_init(niters);
 	
-	printf("\nma\n");
-	mtx_fprint(stdout, ma);
-	printf("\nmb\n");
-	mtx_fprint(stdout, mb);
-	printf("\nmc\n");
-	mtx_fprint(stdout, mc);
-
-	printf("\nprec: %ld, eps: %f\n", prec, eps);
-	
 	return 0;
 }
 
