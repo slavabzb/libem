@@ -5,7 +5,7 @@
 #include <mpfr.h>
 
 /**
- * A matrix POD structure.
+ * Matrix structure.
  */
 struct mtx
 {
@@ -45,6 +45,19 @@ int mtx_clear(struct mtx const m);
  * @return The number of characters written, or 0 if an error occurred.
  */
 int mtx_fprint(FILE* stream, struct mtx const m);
+
+/**
+ * Reads a matrix from a stream.
+ * 
+ * Reads m.nrows lines from the stream
+ * and splits each line m.ncols times by delim.
+ * 
+ * @param stream a stream
+ * @param m a matrix
+ * @param delim column delimeters
+ * @return 0 on success, non-zero otherwise
+ */
+int mtx_fscan(FILE* stream, struct mtx m, char const* delim);
 
 /**
  * Sets the matrix elements values.

@@ -1,5 +1,7 @@
 #include <omp.h>
 #include <stdlib.h>
+#include <string.h>
+#include <limits.h>
 #include <matrix/matrix.h>
 
 
@@ -78,6 +80,33 @@ int mtx_fprint(FILE* stream, struct mtx const m)
 	}
 	
 	return total;
+}
+
+int mtx_fscan(FILE* stream, struct mtx m, char const* delim)
+{
+	char buf[LINE_MAX];
+	size_t i, j;
+	
+	for (i = 0; i < m.nrows; ++i)
+	{
+		fgets(buf, LINE_MAX, stream);
+		char* token = (char*) strtok(buf, delim);
+		
+		for (j = 0; j < m.ncols; ++j)
+		{
+			if (NULL == token)
+				return -1;
+			
+			double d = atof(token);
+			
+			mpfr_t* const ptr = m.storage + i * m.ncols + j;
+			mpfr_set_d(*ptr, d, MPFR_RNDN);
+		
+			token = (char*) strtok(NULL, delim);
+		}
+	}
+	
+	return 0;
 }
 
 int mtx_fill(struct mtx m, mpfr_t val, mpfr_t diagval)
@@ -169,14 +198,10 @@ int mtx_copy(struct mtx rop, struct mtx const op)
 int mtx_mul(struct mtx rop, struct mtx const op1, struct mtx const op2)
 {
 	if (rop.nrows != op1.nrows || rop.ncols != op2.ncols)
-	{
 		return -1;
-	}
 	
 	if (op1.ncols != op2.nrows)
-	{
 		return -1;
-	}
 	
 	mpfr_prec_t const prec = mpfr_get_prec(*rop.storage);
 	
